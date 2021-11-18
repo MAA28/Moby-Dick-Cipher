@@ -1,27 +1,37 @@
-# make encoded text into plain text
-from clize import run
+# makes plain text into encoded text
 import json
 import re
+from clize import run
 from tqdm import tqdm
+from random import choice
 
 
-def main(text: str):
-    with open('chapters.json', 'r') as file:
-        chapters = json.load(file)
+def encrypt(file_name: str, plain_text: str) -> str:
+    f"""
+    Encrypts the text using the data from "{file_name} dictionary.json".
+    :param file_name: 
+    :param plain_text:
+    :return encrypted_text:
+    """
+    with open(f'{file_name.split(".")[0]} dictionary.json', 'r') as file:
+        dictionary = json.load(file)
 
-    regex = r"([\w][\w']*\w)|\(\d+:\d+\)"
+    rgx = re.compile(r'\b[^\s]+\b')
 
-    matches = re.finditer(regex, text, re.MULTILINE)
-    words = [text[match.start():match.end()] for match in list(matches)]
+    matches = rgx.finditer(plain_text)
 
-    for word in tqdm(words):
-        if re.match(r'\(\d+:\d+\)', word):
-            i,j = [int(index) for index in word[1:-1].split(':')]
-            key = list(chapters.keys())[i]
-            content = chapters[key][j]
-            text = text.replace(word, content)
+    encoded_text = plain_text
+    for match in tqdm(matches):
+        if match.group(0).lower() in dictionary:
+            replacement = choice(dictionary[match.group(0).lower()])
+            encoded_text = encoded_text.replace(match.group(0), f'({replacement[0]}:{replacement[1]})', 1)
 
-    print(text)
+    return encoded_text
+
+
+def main(file_name: str, text: str):
+    print(encrypt(file_name,text))
+
 
 if __name__ == '__main__':
     run(main)
